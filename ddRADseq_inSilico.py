@@ -63,6 +63,8 @@ def ddRAD_digest(sequence_records, RE_1, RE_2):
     # Identify overhangs produced by digest and determine index in recognition site
     # where the cut occurs. Used to determine which RE cut on either end of the fragments
     # so they can be placed in the appropriate bin (above)
+    print "Determining 5' and 3' overhangs for chosen enzymes"
+    time.sleep(1)
     RE_1_FivePrime_cut_index = RE_1.elucidate().find('^')
     RE_2_FivePrime_cut_index = RE_2.elucidate().find('^')
     RE_1_overhang_length = len(RE_1.site[RE_1_FivePrime_cut_index:])
@@ -72,20 +74,26 @@ def ddRAD_digest(sequence_records, RE_1, RE_2):
     # Return an analysis object where the cut positions of all REs
     # can be extracted. Add Analysis object as value to dictionary where the
     # key is the sequence record ID.
+    print "Identifying cut positions of chosen enzymes"
+    time.sleep(1)
     for record in sequence_records:
         cut_positions[record.id] = rst.Analysis(RE_batch, record.seq, linear=True)
 
     # Iterate over dictionary and for each record ID, extract the cut positions for
     # both enzymes and create a list that merges these and sorts them in ascending order.
     # Add merged list as additional key:value pair to dictionary
+    print "Retrieving cut positions"
+    time.sleep(1)
     for ID, ana in cut_positions.items():
         ana.full()["merged_cuts"] = sorted(ana.full()[RE_1] + ana.full()[RE_2])
         cut_positions[ID] = ana.full()
 
     # Iterate over sequence records
+    print "Digesting fragments in multi-fasta file and assessing fragments ends"
+    time.sleep(1)
     for record in sequence_records:
 
-        sequence = str(record.seq) # Get sequence
+        sequence = str(record.seq)  # Get sequence
 
         # Extract list with cut positions for both enzymes. # None added to cut_positions
         # to make sure last fragment is included
@@ -232,20 +240,20 @@ def summary_statistics(fragment_lengths, min_bin_size, max_bin_size, step, RE_1,
 
 if __name__ == "__main__":
 
-        # Create directories
+        # Define command line arguments
+    parser = argparse.ArgumentParser(prog="From a multi-fasta file (e.g. genome sequence), perform an in-silico dual digest with specified restriction enzymes, returning the distribution of fragment lengths bound by different cut sites on either side.")
+    parser.add_argument('fasta_dir', help="Path to directory containing multi-fasta file", type=str)
+    parser.add_argument('RE_1', help="Name of first restriction enzyme used in digest", type=str)
+    parser.add_argument('RE_2', help="Name of second restriction enzyme used in digest", type=str)
+    args = vars(parser.parse_args())
+
+    # Create directories
     print("Creating output directories")
     plot_dir = "./plots/"
     output_dir = "./output/"
     create_directory(plot_dir)
     create_directory(output_dir)
     time.sleep(1)
-
-    # Define command line arguments
-    parser = argparse.ArgumentParser(prog="From a multi-fasta file (e.g. genome sequence, perform and in-silico dual digest with specified restriction enzymes, returning the distribution of fragment lengths bound by cuts sites both enzymes.")
-    parser.add_argument('fasta_dir', help="Path to directory containing multi-fasta file", type=str)
-    parser.add_argument('RE_1', help="Name of first restriction enzyme used in digest", type=str)
-    parser.add_argument('RE_2', help="Name of second restriction enzyme used in digest", type=str)
-    args = vars(parser.parse_args())
 
     # Retrieve arguments passed from command line
     fasta_dir = args['fasta_dir']
@@ -297,4 +305,6 @@ if __name__ == "__main__":
     outfile = output_dir + "{0}-{1}_digest_summaryStats.txt"
     summary_statistics(dual_frag_lengths, min_bin_size, max_bin_size, step, RE_1, RE_2, outfile)
 
-
+    print "The summary statistics for the diges are located in {0}".format(outfile)
+    print ""
+    print "DONE!"
